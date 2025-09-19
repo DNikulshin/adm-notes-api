@@ -1,0 +1,98 @@
+# Universal variables
+@hostname = http://localhost:3000
+# Use {{$timestamp}} to generate a unique username for each run
+@username = testuser-{{$timestamp}}
+@password = strongpassword
+
+# Admin credentials from .env
+@adminUsername = admin
+@adminPassword = admin
+
+###
+
+# @name register
+# Register a new user
+POST {{hostname}}/users/register
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+###
+
+# @name loginUser
+# Login as a regular user
+POST {{hostname}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+@userToken = {{loginUser.response.body.access_token}} 
+###
+
+# @name loginAdmin
+# Login as an admin user
+POST {{hostname}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{adminUsername}}",
+  "password": "{{adminPassword}}"
+}
+@adminToken = {{loginAdmin.response.body.access_token}}
+###
+
+# @name getAllTodos
+# Get all todos (Public)
+GET {{hostname}}/todos
+
+###
+
+# @name createTodo
+# Create a new todo (Requires user authentication)
+POST {{hostname}}/todos
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "title": "My first todo",
+  "description": "Finish the project documentation."
+}
+@todoId = {{createTodo.response.body.id}}
+###
+
+# @name getTodoById
+# Get a specific todo by its ID (Public)
+GET {{hostname}}/todos/{{todoId}}
+
+###
+
+# @name updateTodo
+# Update an existing todo (Requires user authentication)
+PUT {{hostname}}/todos/{{todoId}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "title": "My updated todo",
+  "description": "Review and finalize the project documentation.",
+  "isDone": true
+}
+
+###
+
+# @name deleteTodo
+# Delete a todo (Requires user authentication)
+DELETE {{hostname}}/todos/{{todoId}}
+Authorization: Bearer {{userToken}}
+
+###
+
+# @name getAllUsers
+# Get all users (Requires admin authentication)
+GET {{hostname}}/users
+Authorization: Bearer {{adminToken}}
